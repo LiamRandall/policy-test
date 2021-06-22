@@ -59,7 +59,7 @@ policies:
 
 
 
-- name: aws-acm-certificate-notify-on-expired-certs
+- name: aws-acm-certificate-notify-on-expired-certs2
   tags:
     - Category::Security
     - Compliance::APRA
@@ -90,7 +90,7 @@ policies:
             region: {region}
 
 
-- name: aws-acm-certificate-delete-expired-certs
+- name: aws-acm-certificate-delete-expired-certs2
   tags:
     - Category::Security
     - Compliance::APRA
