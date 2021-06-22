@@ -1,0 +1,138 @@
+vars:
+
+  long-description: &long-description |
+      This policy will ensure SNS topics do not have a public Subscribe
+      permission via a wildcard in the SNS resource's access policy. Granting
+      the public Subscribe permissions puts the SNS topics security at risk as
+      any unauthorized user can receive topic messages. Topic permissions should
+      be limited only to trusted subscribers. This policy helps with compliance
+      standards such as PCI-DSS, NIST, and GDPR by identifying and removing
+      these non-compliant permissions.
+
+  description: &description |
+      SNS topics which have unauthorized public Subscribe access will be
+      identified, the insecure public Subscribe permissions removed, and the
+      impacted users will be notified.
+
+  violation-desc: &violation-desc |
+      SNS topics should not be made publicly accessible. The identified SNS
+      topics access was overly permissive via the SNS topic's access
+      policy and the unauthorized public Subscribe permissions have
+      automatically been removed.
+
+  action-desc: &action-desc |
+      The identified SNS topics public Subscribe access has been removed by
+      Cloud Custodian.
+
+  subject: &subject "SNS Topic - Unauthorized Public Subscribe Access Removed - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+##########################################################################
+#####   AWS.SNS - Unauthorized Public Subscribe Permissions          #####
+##########################################################################
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-sns-public-subscribe-permissions
+  tags:
+    - Category::Security
+    - Compliance::GDPR
+    - Compliance::PCI DSS
+    - Compliance::NIST 800-53
+    - Risk::Medium
+  metadata:
+    long-description: *long-description
+  resource: sns
+  mode:
+      type: cloudtrail
+      events:
+        - source: sns.amazonaws.com
+          event: CreateTopic
+          ids: 'responseElements.topicArn'
+        - source: sns.amazonaws.com
+          event: SetTopicAttributes
+          ids: 'requestParameters.topicArn'
+        - source: sns.amazonaws.com
+          event: AddPermission
+          ids: 'requestParameters.topicArn'
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: true
+        actions:
+         - "SNS:Subscribe"
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-sns-public-subscribe-permissions-pull
+  tags:
+    - Category::Security
+    - Compliance::GDPR
+    - Compliance::PCI DSS
+    - Compliance::NIST 800-53
+    - Risk::Medium
+  metadata:
+    long-description: *long-description
+  resource: sns
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: true
+        actions:
+         - "SNS:Subscribe"
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

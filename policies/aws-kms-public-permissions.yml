@@ -1,0 +1,139 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that KMS keys are not granting any public access
+      to AWS accounts. Any public cross account permissions will be removed from
+      the KMS keys to bring the resource back into compliance with this policy
+      and a notification will be sent. If a KMS key's policy is publicly
+      permissive, attackers or untrusted parties could gain access to the KMS
+      keys and change the keys access to remove trusted users and add untrusted
+      users access to decrypt the data. This policy helps with compliance
+      standards such as APRA, MAS, NIST 800-53 rev4 and PCI DSS by identifying
+      and remediating the non-compliant public KMS keys permissions.
+
+  description: &description |
+      KMS keys which have public cross account permissions will be identified,
+      the insecure public permissions removed, and impacted users will be
+      notified.
+
+  violation-desc: &violation-desc |
+      KMS keys should not be granting public permissions to all AWS accounts.
+      The identified KMS keys access was publicly facing via the KMS key's
+      access policy and the unauthorized public permissions have automatically
+      been removed.
+
+  action-desc: &action-desc |
+      The identified KMS keys unauthorized public cross account permissions have
+      been removed by Cloud Custodian.
+
+  subject: &subject "KMS Key - Public Access Removed - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+policies:
+
+
+################################################
+#####   AWS.KMS - Public Permissions       #####
+################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-kms-public-permissions
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: kms
+  metadata:
+    long-description: *long-description
+  mode:
+      type: cloudtrail
+      events:
+        - source: kms.amazonaws.com
+          event: CreateGrant
+          ids: 'requestParameters.keyId'
+        - source: kms.amazonaws.com
+          event: PutKeyPolicy
+          ids: 'requestParameters.keyId'
+        - source: kms.amazonaws.com
+          event: CreateKey
+          ids: 'requestParameters.keyMetadata.keyId'
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: false
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-kms-public-permissions-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: kms
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  metadata:
+    long-description: *long-description
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: true
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

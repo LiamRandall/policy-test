@@ -1,0 +1,188 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AWS Elasticsearch domains are encrypted at
+      rest to ensure proper data security and compliance standards are being
+      met. Encryption at rest will help prevent unauthorized users from viewing
+      the sensitive data stored on the Elasticsearch cluster's storage devices.
+      In addition to the data being encrypted, the replicas, logs, swap memory,
+      and automated snapshots are also encrypted automatically when encryption
+      at rest is enabled. This policy helps with compliance standards such as
+      APRA, GDPR, HIPAA, MAS, and NIST 800-53 rev4 by identifying the
+      non-compliant non-encrypted Elasticsearch domains and taking an
+      appropriate action. Remediation options include deletion of the
+      non-encrypted domain and a notification sent to the resource creator.
+      Encryption cannot be enabled after an Elasticsearch domain is created.
+
+  description-delete: &description-delete |
+      Newly launched Elasticsearch domains which are not encrypted at rest will
+      be identified and tagged for deletion. Deletion will occur after domain
+      creation is complete. Encryption cannot be enabled after an Elasticsearch
+      domain is created.
+
+  violation-desc-delete: &violation-desc-delete |
+      The identified Elasticsearch domains were not set to use encryption at
+      rest and have been deleted. Encryption at rest is required to provide an
+      additional layer of security to help protect sensitive data and to meet
+      compliance regulations. Encryption at rest cannot be enabled after an
+      Elasticsearch domain has been created.
+
+  action-desc-delete: &action-desc-delete |
+      The non-encrypted Elasticsearch domains identified have been deleted.
+      Please recreate the Elasticsearch domain with encryption at rest enabled.
+
+  description-notify: &description-notify |
+      Elasticsearch domains which are not encrypted at rest will be identified
+      and a notification sent. Encryption cannot be enabled after an
+      Elasticsearch domain is created. The non-encrypted domain should be
+      deleted and recreated using encryption at rest to ensure it meets
+      encryption requirements for compliance regulations.
+
+  violation-desc-notify: &violation-desc-notify |
+      The identified Elasticsearch domains are not set to use encryption at rest
+      and should be deleted and recreated with encryption at rest enabled.
+      Encryption at rest is required to provide an additional layer of security
+      to help protect sensitive data and to meet compliance regulations.
+
+  action-desc-notify: &action-desc-notify |
+      The non-encrypted Elasticsearch domain identified should be deleted and
+      recreated as encryption at rest cannot be enabled after creation.
+
+  subject-delete: &subject-delete "Elasticsearch - New Non-Encrypted Elasticsearch Domain Deleted - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "Elasticsearch - Non-Encrypted Elasticsearch Domain Identified - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+#########################################################################
+#####   AWS.ELASTICSEARCH - Domains Must Be Encrypted At Rest       #####
+#########################################################################
+
+## Policy Explanation:
+## Elasticsearch domains must be encrypted at creation as it cannot be enabled
+## afterwards. Elasticsearch domains cannot be deleted while they are in a
+## creating status so a policy chain is required for remediation.
+
+
+################################
+## CloudTrail mode policy chain
+################################
+
+
+- name: aws-elasticsearch-encryption-at-rest
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description
+  mode:
+    type: cloudtrail
+    events:
+      - CreateElasticsearchDomain
+  description: *description-delete
+  filters:
+      - type: value
+        key: "EncryptionAtRestOptions.Enabled"
+        value: false
+  actions:
+      - type: tag
+        key: EncryptedAtRest
+        value: "False"
+
+
+
+
+- name: aws-elasticsearch-non-encrypted-delete
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description
+  mode:
+    type: periodic
+    schedule: "rate(30 minutes)"
+  description: *description-delete
+  filters:
+    - type: value
+      key: "EncryptionAtRestOptions.Enabled"
+      value: false
+    - "tag:EncryptedAtRest": present
+    - Created: true
+    - Processing: false
+    - UpgradeProcessing: false
+  actions:
+    - delete
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-delete
+      violation_desc: *violation-desc-delete
+      action_desc: *action-desc-delete
+      owner_absent_contact:
+        - "{missingcontact}"
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-elasticsearch-non-encrypted-notify-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description
+  description: *description-notify
+  filters:
+    - type: value
+      key: "EncryptionAtRestOptions.Enabled"
+      value: false
+    - Created: true
+    - Processing: false
+    - UpgradeProcessing: false
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-notify
+      violation_desc: *violation-desc-notify
+      action_desc: *action-desc-notify
+      to:
+        - resource-owner
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}

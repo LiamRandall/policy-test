@@ -1,0 +1,1514 @@
+vars:
+
+    mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+    security-team-email: &security-team-email security-team@company.com
+
+
+
+
+policies:
+
+
+
+- name: aws-ami-encrypted-notify-pull
+  resource: aws.ami
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS AMIs which are not encrypted.  Per AWS
+    security best practices, all AMIs should be encrypted to protect sensitive
+    data from attackers and unauthorized users. A notification will be sent to
+    the impacted users.
+  filters:
+      - type: value
+        key: "BlockDeviceMappings[*].Ebs.Encrypted"
+        op: in
+        value: false
+        value_type: swap
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS AMI - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-backup-vault-encrypted-notify-pull
+  resource: aws.backup-vault
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Backup Vaults which are not encrypted.
+    Per AWS security best practices, all Backup Vaults should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+     - or:
+       - "EncryptionKeyArn": absent
+       - "EncryptionKeyArn": empty
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Backup Vault - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+
+- name: aws-cache-cluster-encrypted-notify-pull
+  resource: aws.cache-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Cache Clusters which are not encrypted.
+    Per AWS security best practices, all Cache Clusters should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+     - or:
+        - "TransitEncryptionEnabled": false
+        - "AtRestEncryptionEnabled": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Cache Cluster - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-cloudtrail-encryption-remediate-notify-pull
+  resource: aws.cloudtrail
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CloudTrails which are not encrypted.  Per
+    AWS security best practices, all CloudTrails should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+      - KmsKeyId: empty
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS CloudTrail - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-codebuild-encrypted-notify-pull
+  resource: aws.codebuild
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CodeBuilds which are not encrypted.  Per
+    AWS security best practices, all CodeBuilds should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - or:
+         - "encryptionKey": absent
+         - "artifacts.encryptionDisabled": true
+         - "secondaryArtifacts.encryptionDisabled": true
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS CodeBuild - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-dax-encrypted-notify-pull
+  resource: aws.dax
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DAXs which are not encrypted.  Per AWS
+    security best practices, all DAXs should be encrypted to protect sensitive
+    data from attackers and unauthorized users. A notification will be sent to
+    the impacted users.
+  filters:
+    - or:
+       - "SSEDescription.Status": DISABLED
+       - "SSEDescription.Status": DISABLING
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DAX - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-dms-endpoint-encrypted-notify-pull
+  resource: aws.dms-endpoint
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DMS endpoints which are not encrypted.
+    Per AWS security best practices, all DMS endpoints should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DMS Endpoint - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+- name: aws-dms-instance-encrypted-notify-pull
+  resource: aws.dms-instance
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DMS instances which are not encrypted.
+    Per AWS security best practices, all DMS instances should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DMS Instance - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-dynamodb-table-encrypted-notify-pull
+  resource: aws.dynamodb-table
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DynamoDB Tables which are not encrypted.
+    Per AWS security best practices, all DynamoDB Tables should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - "SSEDescription": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DynamoDB Table - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-ebs-snapshot-encryption-notify-pull
+  resource: aws.ebs-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EBS snapshots which are not encrypted.
+    Per AWS security best practices, all EBS snapshots should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+     - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EBS Snapshot - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-ebs-encryption-notify-pull
+  resource: aws.ebs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EBS volumes which are not encrypted.  Per
+    AWS security best practices, all EBS volumes should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+     - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EBS Volume - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-ec2-encrypted-notify-pull
+  resource: aws.ec2
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EC2 instances which are not encrypted.
+    Per AWS security best practices, all EC2 instances should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - type: ebs
+      key: Encrypted
+      value: false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EC2 Instance - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-ecr-encrypted-notify-pull
+  resource: aws.ecr
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS ECR repositories which are not encrypted.
+    Per AWS security best practices, all ECR repositories should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+     - "encryptionConfiguration.encryptionType": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS ECR Repository - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-efs-encrypted-notify-pull
+  resource: aws.efs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EFS volumes which are not encrypted.  Per
+    AWS security best practices, all EFS volumes should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EFS Filesystem - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-eks-encrypted-notify-pull
+  resource: aws.eks
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EKS clusters which are not encrypted.  Per
+    AWS security best practices, all EKS clusters should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - "encryptionConfig": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EKS Cluster - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-elasticache-group-encrypted-notify-pull
+  resource: aws.elasticache-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticache groups which are not
+    encrypted.  Per AWS security best practices, all Elasticache groups should
+    be encrypted to protect sensitive data from attackers and unauthorized
+    users. A notification will be sent to the impacted users.
+  filters:
+    - or:
+        - "TransitEncryptionEnabled": false
+        - "AtRestEncryptionEnabled": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Elasticache Group - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-elasticsearch-encrypted-notify-pull
+  resource: aws.elasticsearch
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticsearch domains which are not
+    encrypted.  Per AWS security best practices, all Elasticsearch domains
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+    - or:
+      - "EncryptionAtRestOptions.Enabled": false
+      - "NodeToNodeEncryptionOptions.Enabled": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Elasticsearch Domain - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-firehose-encrypted-notify-pull
+  resource: aws.firehose
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Firehose streams which are not encrypted.
+    Per AWS security best practices, all Firehose streams should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - "DeliveryStreamEncryptionConfiguration.Status": DISABLED
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Firehose - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-fsx-encrypted-notify-pull
+  resource: aws.fsx
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX shares which are not encrypted.  Per
+    AWS security best practices, all FSX shares should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS FSX Share - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-fsx-backup-encrypted-notify-pull
+  resource: aws.fsx-backup
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX share backups which are not encrypted.
+    Per AWS security best practices, all FSX share backups should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+    - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS FSX Backup - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-glue-security-configuration-encrypted-notify-pull
+  resource: aws.glue-security-configuration
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Glue security configurations which are not
+    encrypted.  Per AWS security best practices, all Glue security
+    configurations should be encrypted to protect sensitive data from attackers
+    and unauthorized users. A notification will be sent to the impacted users.
+  filters:
+    - or:
+        - "EncryptionConfiguration.S3Encryption[].KmsKeyArn": absent
+        - "EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode": DISABLED
+        - "EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode": DISABLED
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Glue Security Configuration - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+
+- name: aws-glue-table-encrypted-notify-pull
+  resource: aws.glue-table
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Glue tables which are not encrypted.  Per
+    AWS security best practices, all Glue tables should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - "Parameters.has_encrypted_data": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Glue Table - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-kafka-encrypted-notify-pull
+  resource: aws.kafka
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kafkas which are not encrypted.  Per AWS
+    security best practices, all Kafkas should be encrypted to protect sensitive
+    data from attackers and unauthorized users. A notification will be sent to
+    the impacted users.
+  filters:
+    - or:
+        - type: value
+          key: "EncryptionInfo.EncryptionInTransit.ClientBroker"
+          op: ne
+          value: "TLS"
+        - "EncryptionInfo.EncryptionAtRest": empty
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Kafka - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-kinesis-encrypted-notify-pull
+  resource: aws.kinesis
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis streams which are not encrypted.
+    Per AWS security best practices, all Kinesis streams should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+      - "KeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Kinesis - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-kinesis-video-encrypted-notify-pull
+  resource: aws.kinesis-video
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis video streams which are not
+    encrypted.  Per AWS security best practices, all Kinesis video streams
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+      - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Kinesis Video - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-lambda-encrypted-notify-pull
+  resource: aws.lambda
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Lambda functions which are not encrypted.
+    Per AWS security best practices, all Lambda functions should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+      - "KMSKeyArn": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Lambda Function - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-log-group-encrypted-notify-pull
+  resource: aws.log-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CloudWatch Log groups which are not
+    encrypted.  Per AWS security best practices, all CloudWatch Log groups
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+      - "kmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS CloudWatch Log Group - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-message-broker-encrypted-notify-pull
+  resource: aws.message-broker
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS message brokers which are not encrypted.
+    Per AWS security best practices, all message brokers should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+      - "EncryptionOptions": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Message Broker - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-rds-cluster-encrypted-notify-pull
+  resource: aws.rds-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS clusters which are not encrypted.  Per
+    AWS security best practices, all RDS clusters should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+      - "StorageEncrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Cluster - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-rds-cluster-snapshot-encrypted-notify-pull
+  resource: aws.rds-cluster-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS cluster snapshots which are not
+    encrypted.  Per AWS security best practices, all RDS cluster snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+      - "StorageEncrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Cluster Snapshot - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-rds-encrypted-notify-pull
+  resource: aws.rds
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS instances which are not encrypted.
+    Per AWS security best practices, all RDS instances  should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+      - "StorageEncrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Instance - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-rds-snapshot-encrypted-notify-pull
+  resource: aws.rds-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS instance snapshots which are not
+    encrypted.  Per AWS security best practices, all RDS instance snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+      - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Snapshot - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-redshift-encrypted-notify-pull
+  resource: aws.redshift
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Redshift clusters which are not encrypted.
+    Per AWS security best practices, all Redshift clusters should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+      - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Redshift Cluster - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-redshift-snapshot-encrypted-notify-pull
+  resource: aws.redshift-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Redshift cluster snapshots which are not
+    encrypted.  Per AWS security best practices, all Redshift cluster snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+      - "Encrypted": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Redshift Snapshot - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-s3-encrypted-notify-pull
+  resource: aws.s3
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS S3 buckets which are not encrypted.  Per
+    AWS security best practices, all S3 buckets should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+        - type: bucket-encryption
+          state: False
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS S3 Bucket - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-sagemaker-endpoint-config-encrypted-notify-pull
+  resource: aws.sagemaker-endpoint-config
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker endpoint configurations which
+    are not encrypted.  Per AWS security best practices, all Sagemaker endpoint
+    configurations should be encrypted to protect sensitive data from attackers
+    and unauthorized users. A notification will be sent to the impacted users.
+  filters:
+        - "kmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Sagemaker Endpoint Configuration - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-sagemaker-notebook-encrypted-notify-pull
+  resource: aws.sagemaker-notebook
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker notebooks which are not
+    encrypted.  Per AWS security best practices, all Sagemaker notebooks should
+    be encrypted to protect sensitive data from attackers and unauthorized
+    users. A notification will be sent to the impacted users.
+  filters:
+        - "kmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Sagemaker Notebook - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-secrets-manager-encrypted-notify-pull
+  resource: aws.secrets-manager
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Secrets Manager secrets which are not
+    encrypted.  Per AWS security best practices, all Secrets Manager secrets
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users. A notification will be sent to the impacted users.
+  filters:
+     - "KmsKeyId": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Secrets Manager - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-snowball-cluster-encrypted-notify-pull
+  resource: aws.snowball-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Snowball clusters which are not encrypted.
+    Per AWS security best practices, all Snowball clusters should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+    - "KmsKeyARN": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Snowball Cluster - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-snowball-encrypted-notify-pull
+  resource: aws.snowball
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Snowballs which are not encrypted.  Per
+    AWS security best practices, all Snowballs should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+    - "KmsKeyARN": absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Snowball - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-sns-encrypted-notify-pull
+  resource: aws.sns
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SNS topics which are not encrypted.  Per
+    AWS security best practices, all SNS topics should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+      - KmsMasterKeyId: absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS SNS Topic - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-sqs-encrypted-notify-pull
+  resource: aws.sqs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SQS queues which are not encrypted.  Per
+    AWS security best practices, all SQS queues should be encrypted to protect
+    sensitive data from attackers and unauthorized users. A notification will be
+    sent to the impacted users.
+  filters:
+      - KmsMasterKeyId: absent
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS SQS Queue - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-workspaces-encrypted-notify-pull
+  resource: aws.workspaces
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Workspaces which are not encrypted.  Per
+    AWS security best practices, all AWS Workspaces  should be encrypted to
+    protect sensitive data from attackers and unauthorized users. A notification
+    will be sent to the impacted users.
+  filters:
+    - or:
+        - "VolumeEncryptionKey": absent
+        - "UserVolumeEncryptionEnabled": false
+        - "RootVolumeEncryptionEnabled": false
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Workspaces - Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1

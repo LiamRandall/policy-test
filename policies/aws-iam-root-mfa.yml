@@ -1,0 +1,110 @@
+vars:
+
+
+  long-description: &long-description |
+      This policy will identify root users which are missing an MFA device. Per
+      security best practices, MFA devices should be used in order to provide
+      an additional layer of security and to help prevent unauthorized access.
+
+  description: &description |
+      IAM root users should be using an MFA device for all logins. Any root
+      users without MFA devices will be identified and the impacted users
+      notified.
+
+  subject: &subject "IAM Root User - No MFA Registered! [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+####################################################################
+#####   AWS.IAM-USER - Root User Missing MFA                   #####
+####################################################################
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-iam-root-missing-mfa
+  metadata:
+      long-description: *long-description
+  resource: iam-user
+  description: *description
+  region: us-east-1
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::CIS 1.5
+    - Compliance::GDPR
+    - Compliance::MAS
+    - Compliance::NIST
+    - Risk::High
+  mode:
+     type: cloudtrail
+     events:
+        - ConsoleLogin
+  filters:
+    - type: mfa-device
+      key: UserName
+      value: null
+    - type: credential
+      key: user
+      value: <root_account>
+  actions:
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        to:
+            - event-owner
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-iam-root-missing-mfa-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::CIS 1.5
+    - Compliance::GDPR
+    - Compliance::MAS
+    - Compliance::NIST
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: iam-user
+  region: us-east-1
+  description: *description
+  filters:
+    - type: mfa-device
+      key: UserName
+      value: null
+    - type: credential
+      key: user
+      value: <root_account>
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      to:
+        - resource-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}

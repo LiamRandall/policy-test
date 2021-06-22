@@ -1,0 +1,79 @@
+vars:
+
+  long-description: &long-description |
+      This policy will check all existing IAM server certificates to ensure they
+      are not vulnerable to the critical OpenSSL Heartbleed bug. This check is
+      performed by verifying the IAM server certificates creation date was after
+      April 1st 2014. If the Heartbleed bug is present in a IAM server
+      certificate, this would allow attackers to intercept sensitive and
+      confidential data straight from memory without leaving a trace, as well as
+      impersonate users and services. This policy helps with compliance
+      standards such as APRA, MAS, NIST 800-53 rev4, and PCI-DSS by identifying
+      the non-compliant at-risk IAM server certificates and notifying the
+      impacted users.
+
+  description: &description |
+      Any IAM server certificates which were created before April 1st 2014 will
+      be identified as high-risk for the critical OpenSSL Hearbleed bug, and
+      the impacted users notified.
+
+
+  violation-desc: &violation-desc |
+      The identified IAM server certificates were created before April 1st 2014
+      and are at high-risk for the OpenSSL critical Heartbleed bug which allows
+      attackers to intercept sensitive and confidential data from memory without
+      a trace.
+
+  action-desc: &action-desc |
+      Please create a new IAM server certificate and update any resources using
+      the old certificate to point to the new certificate. Once you verify the new
+      certificate works, please delete the old high-risk certificate.
+
+  subject: &subject "IAM Server Certificate - Critical Heartbleed Bug! [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-iam-certificate-heartbleed-bug-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::NIST
+    - Compliance::MAS
+    - Compliance::PCI-DSS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: iam-certificate
+  description: *description
+  filters:
+    - type: value
+      key: UploadDate
+      value_type: date
+      op: less-than
+      value: "2014/04/01"
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      violation_desc: *violation-desc
+      action_desc: *action-desc
+      to:
+        - resource-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}

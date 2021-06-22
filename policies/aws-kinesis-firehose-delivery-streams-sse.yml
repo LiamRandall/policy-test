@@ -1,0 +1,148 @@
+vars:
+
+  long-description: &long-description |
+      AWS Kinesis Firehose is a fully managed service designed for real-time
+      streaming data delivery to destinations such as Amazon S3, Amazon
+      Redshift, Amazon Elasticsearch and Splunk. Server-Side-Encryption (SSE)
+      for Amazon Kinesis Firehose delivery streams helps you meet security
+      requirements by providing an extra layer of protection for your Kinesis Firehose
+      data at-rest.
+
+  description: &description |
+      This policy ensures that your AWS Kinesis Firehose delivery streams are
+      encrypted using Server-Side-Encryption (SSE), in order to comply with
+      regulatory requirements and to protect your Kinesis data at-rest. When
+      Server-Side-Encryption is enabled, Kinesis Firehose requests the AWS S3 service to
+      encrypt your data before saving it to disk, and decrypts it when you
+      download it.
+
+  kms-key-alias: &kms-key-alias alias/Company-Standardized-Firehose-CMK
+
+  violation-desc: &violation-desc |
+      AWS Kinesis Firehose Delivery Streams should be encrypted using
+      Server-Side-Encryption in order to meet regulatory requirements and
+      protect your data at-rest. The identified Kinesis Firehose Delivery
+      Streams were not using SSE and have now been modified to utilize SSE with
+      the aws/kinesis KMS key.
+
+  action-desc: &action-desc |
+      The identified Kinesis Firehose Delivery Streams have been modified to
+      utilize SSE with the alias/Company-Standardized-Kinesis-CMK. Please verify
+      your Kinesis Delivery Streams functionality.
+
+  subject: &subject "AWS Kinesis Firehose - Delivery Streams Encryption Has Been Enabled - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+##########################################################################
+#####   AWS.KINESIS FIREHOSE DELIVERY STREAMS - Not Encrypted        #####
+##########################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-kinesis-firehose-delivery-streams-sse
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST
+    - Compliance::PCI-DSS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: firehose
+  mode:
+    type: cloudtrail
+    events:
+      - source: firehose.amazonaws.com
+        event: CreateDeliveryStream
+        ids: 'requestParameters.deliveryStreamName'
+      - source: firehose.amazonaws.com
+        event: StopDeliveryStreamEncryption
+        ids: 'requestParameters.deliveryStreamName'
+  description: *description
+  filters:
+      - or:
+        - "DeliveryStreamEncryptionConfiguration.Status": DISABLED
+        - type: kms-key
+          key: c7n:AliasName
+          value: alias/aws/firehose
+  actions:
+    - type: encrypt-s3-destination
+      key_arn: *kms-key-alias
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      violation_desc: *violation-desc
+      action_desc: *action-desc
+      to:
+          - resource-owner
+          - event-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}
+
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-kinesis-firehose-delivery-streams-sse-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST
+    - Compliance::PCI-DSS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: firehose
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  description: *description
+  filters:
+      - or:
+        - "DeliveryStreamEncryptionConfiguration.Status": DISABLED
+        - type: kms-key
+          key: c7n:AliasName
+          value: alias/aws/firehose
+  actions:
+    - type: encrypt-s3-destination
+      key_arn: *kms-key-alias
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      violation_desc: *violation-desc
+      action_desc: *action-desc
+      to:
+          - resource-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}

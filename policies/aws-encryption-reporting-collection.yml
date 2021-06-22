@@ -1,0 +1,960 @@
+policies:
+
+
+
+- name: aws-ami-encrypted-reporting-pull
+  resource: aws.ami
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS AMIs which are not encrypted.  Per AWS
+    security best practices, all AMIs should be encrypted to protect sensitive
+    data from attackers and unauthorized users.
+  filters:
+      - type: value
+        key: "BlockDeviceMappings[*].Ebs.Encrypted"
+        op: in
+        value: false
+        value_type: swap
+
+
+
+
+- name: aws-backup-vault-encrypted-reporting-pull
+  resource: aws.backup-vault
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Backup Vaults which are not encrypted.
+    Per AWS security best practices, all Backup Vaults should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+     - or:
+       - "EncryptionKeyArn": absent
+       - "EncryptionKeyArn": empty
+
+
+
+
+- name: aws-cache-cluster-encrypted-reporting-pull
+  resource: aws.cache-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Cache Clusters which are not encrypted.
+    Per AWS security best practices, all Cache Clusters should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+     - or:
+        - "TransitEncryptionEnabled": false
+        - "AtRestEncryptionEnabled": false
+
+
+
+
+- name: aws-cloudtrail-encryption-remediate-reporting-pull
+  resource: aws.cloudtrail
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CloudTrails which are not encrypted.  Per
+    AWS security best practices, all CloudTrails should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+      - KmsKeyId: empty
+
+
+
+- name: aws-codebuild-encrypted-reporting-pull
+  resource: aws.codebuild
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CodeBuilds which are not encrypted.  Per
+    AWS security best practices, all CodeBuilds should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - or:
+         - "encryptionKey": absent
+         - "artifacts.encryptionDisabled": true
+         - "secondaryArtifacts.encryptionDisabled": true
+
+
+
+
+
+- name: aws-dax-encrypted-reporting-pull
+  resource: aws.dax
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DAXs which are not encrypted.  Per AWS
+    security best practices, all DAXs should be encrypted to protect sensitive
+    data from attackers and unauthorized users.
+  filters:
+    - or:
+       - "SSEDescription.Status": DISABLED
+       - "SSEDescription.Status": DISABLING
+
+
+
+
+- name: aws-dms-endpoint-encrypted-reporting-pull
+  resource: aws.dms-endpoint
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DMS endpoints which are not encrypted.
+    Per AWS security best practices, all DMS endpoints should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - "KmsKeyId": absent
+
+
+
+- name: aws-dms-instance-encrypted-reporting-pull
+  resource: aws.dms-instance
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DMS instances which are not encrypted.
+    Per AWS security best practices, all DMS instances should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - "KmsKeyId": absent
+
+
+
+
+- name: aws-dynamodb-table-encrypted-reporting-pull
+  resource: aws.dynamodb-table
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DynamoDB Tables which are not encrypted.
+    Per AWS security best practices, all DynamoDB Tables should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - "SSEDescription": absent
+
+
+
+
+
+
+- name: aws-ebs-snapshot-encryption-reporting-pull
+  resource: aws.ebs-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EBS snapshots which are not encrypted.
+    Per AWS security best practices, all EBS snapshots should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+     - "Encrypted": false
+
+
+
+
+
+
+- name: aws-ebs-encryption-reporting-pull
+  resource: aws.ebs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EBS volumes which are not encrypted.  Per
+    AWS security best practices, all EBS volumes should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+     - "Encrypted": false
+
+
+
+
+
+
+- name: aws-ec2-encrypted-reporting-pull
+  resource: aws.ec2
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EC2 instances which are not encrypted.
+    Per AWS security best practices, all EC2 instances should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - type: ebs
+      key: Encrypted
+      value: false
+
+
+
+
+
+- name: aws-ecr-encrypted-reporting-pull
+  resource: aws.ecr
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS ECR repositories which are not encrypted.
+    Per AWS security best practices, all ECR repositories should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+     - "encryptionConfiguration.encryptionType": absent
+
+
+
+
+
+- name: aws-efs-encrypted-reporting-pull
+  resource: aws.efs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EFS volumes which are not encrypted.  Per
+    AWS security best practices, all EFS volumes should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - "Encrypted": false
+
+
+
+
+
+
+- name: aws-eks-encrypted-reporting-pull
+  resource: aws.eks
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EKS clusters which are not encrypted.  Per
+    AWS security best practices, all EKS clusters should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - "encryptionConfig": absent
+
+
+
+
+- name: aws-elasticache-group-encrypted-reporting-pull
+  resource: aws.elasticache-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticache groups which are not
+    encrypted.  Per AWS security best practices, all Elasticache groups should
+    be encrypted to protect sensitive data from attackers and unauthorized
+    users.
+  filters:
+    - or:
+        - "TransitEncryptionEnabled": false
+        - "AtRestEncryptionEnabled": false
+
+
+
+
+
+
+- name: aws-elasticsearch-encrypted-reporting-pull
+  resource: aws.elasticsearch
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticsearch domains which are not
+    encrypted.  Per AWS security best practices, all Elasticsearch domains
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+    - or:
+      - "EncryptionAtRestOptions.Enabled": false
+      - "NodeToNodeEncryptionOptions.Enabled": false
+
+
+
+
+
+
+
+- name: aws-firehose-encrypted-reporting-pull
+  resource: aws.firehose
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Firehose streams which are not encrypted.
+    Per AWS security best practices, all Firehose streams should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - "DeliveryStreamEncryptionConfiguration.Status": DISABLED
+
+
+
+
+
+
+- name: aws-fsx-encrypted-reporting-pull
+  resource: aws.fsx
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX shares which are not encrypted.  Per
+    AWS security best practices, all FSX shares should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - "KmsKeyId": absent
+
+
+
+
+- name: aws-fsx-backup-encrypted-reporting-pull
+  resource: aws.fsx-backup
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX share backups which are not encrypted.
+    Per AWS security best practices, all FSX share backups should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+    - "KmsKeyId": absent
+
+
+
+
+
+- name: aws-glue-security-configuration-encrypted-reporting-pull
+  resource: aws.glue-security-configuration
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Glue security configurations which are not
+    encrypted.  Per AWS security best practices, all Glue security
+    configurations should be encrypted to protect sensitive data from attackers
+    and unauthorized users.
+  filters:
+    - or:
+        - "EncryptionConfiguration.S3Encryption[].KmsKeyArn": absent
+        - "EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode": DISABLED
+        - "EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode": DISABLED
+
+
+
+
+
+
+
+
+- name: aws-glue-table-encrypted-reporting-pull
+  resource: aws.glue-table
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Glue tables which are not encrypted.  Per
+    AWS security best practices, all Glue tables should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - "Parameters.has_encrypted_data": false
+
+
+
+- name: aws-kafka-encrypted-reporting-pull
+  resource: aws.kafka
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kafkas which are not encrypted.  Per AWS
+    security best practices, all Kafkas should be encrypted to protect sensitive
+    data from attackers and unauthorized users.
+  filters:
+    - or:
+        - type: value
+          key: "EncryptionInfo.EncryptionInTransit.ClientBroker"
+          op: ne
+          value: "TLS"
+        - "EncryptionInfo.EncryptionAtRest": empty
+
+
+
+
+
+
+- name: aws-kinesis-encrypted-reporting-pull
+  resource: aws.kinesis
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis streams which are not encrypted.
+    Per AWS security best practices, all Kinesis streams should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+      - "KeyId": absent
+
+
+
+
+
+- name: aws-kinesis-video-encrypted-reporting-pull
+  resource: aws.kinesis-video
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis video streams which are not
+    encrypted.  Per AWS security best practices, all Kinesis video streams
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+      - "KmsKeyId": absent
+
+
+
+
+
+
+
+- name: aws-lambda-encrypted-reporting-pull
+  resource: aws.lambda
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Lambda functions which are not encrypted.
+    Per AWS security best practices, all Lambda functions should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+      - "KMSKeyArn": absent
+
+
+
+
+
+
+
+- name: aws-log-group-encrypted-reporting-pull
+  resource: aws.log-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CloudWatch Log groups which are not
+    encrypted.  Per AWS security best practices, all CloudWatch Log groups
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+      - "kmsKeyId": absent
+
+
+
+
+
+- name: aws-message-broker-encrypted-reporting-pull
+  resource: aws.message-broker
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS message brokers which are not encrypted.
+    Per AWS security best practices, all message brokers should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+      - "EncryptionOptions": absent
+
+
+
+
+
+
+
+
+- name: aws-rds-cluster-encrypted-reporting-pull
+  resource: aws.rds-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS clusters which are not encrypted.  Per
+    AWS security best practices, all RDS clusters should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+      - "StorageEncrypted": false
+
+
+
+
+
+
+- name: aws-rds-cluster-snapshot-encrypted-reporting-pull
+  resource: aws.rds-cluster-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS cluster snapshots which are not
+    encrypted.  Per AWS security best practices, all RDS cluster snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+      - "StorageEncrypted": false
+
+
+
+
+
+
+- name: aws-rds-encrypted-reporting-pull
+  resource: aws.rds
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS instances which are not encrypted.
+    Per AWS security best practices, all RDS instances  should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+      - "StorageEncrypted": false
+
+
+
+
+
+
+- name: aws-rds-snapshot-encrypted-reporting-pull
+  resource: aws.rds-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS instance snapshots which are not
+    encrypted.  Per AWS security best practices, all RDS instance snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+      - "Encrypted": false
+
+
+
+
+
+
+
+- name: aws-redshift-encrypted-reporting-pull
+  resource: aws.redshift
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Redshift clusters which are not encrypted.
+    Per AWS security best practices, all Redshift clusters should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+      - "Encrypted": false
+
+
+
+
+- name: aws-redshift-snapshot-encrypted-reporting-pull
+  resource: aws.redshift-snapshot
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Redshift cluster snapshots which are not
+    encrypted.  Per AWS security best practices, all Redshift cluster snapshots
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+      - "Encrypted": false
+
+
+
+
+- name: aws-s3-encrypted-reporting-pull
+  resource: aws.s3
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS S3 buckets which are not encrypted.  Per
+    AWS security best practices, all S3 buckets should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+        - type: bucket-encryption
+          state: False
+
+
+
+
+
+
+
+- name: aws-sagemaker-endpoint-config-encrypted-reporting-pull
+  resource: aws.sagemaker-endpoint-config
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker endpoint configurations which
+    are not encrypted.  Per AWS security best practices, all Sagemaker endpoint
+    configurations should be encrypted to protect sensitive data from attackers
+    and unauthorized users.
+  filters:
+        - "kmsKeyId": absent
+
+
+
+
+- name: aws-sagemaker-notebook-encrypted-reporting-pull
+  resource: aws.sagemaker-notebook
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker notebooks which are not
+    encrypted.  Per AWS security best practices, all Sagemaker notebooks should
+    be encrypted to protect sensitive data from attackers and unauthorized
+    users.
+  filters:
+        - "kmsKeyId": absent
+
+
+
+
+
+- name: aws-secrets-manager-encrypted-reporting-pull
+  resource: aws.secrets-manager
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Secrets Manager secrets which are not
+    encrypted.  Per AWS security best practices, all Secrets Manager secrets
+    should be encrypted to protect sensitive data from attackers and
+    unauthorized users.
+  filters:
+     - "KmsKeyId": absent
+
+
+
+
+- name: aws-snowball-cluster-encrypted-reporting-pull
+  resource: aws.snowball-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Snowball clusters which are not encrypted.
+    Per AWS security best practices, all Snowball clusters should be encrypted
+    to protect sensitive data from attackers and unauthorized users. A
+    notification will be sent to the impacted users.
+  filters:
+    - "KmsKeyARN": absent
+
+
+
+
+
+- name: aws-snowball-encrypted-reporting-pull
+  resource: aws.snowball
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Snowballs which are not encrypted.  Per
+    AWS security best practices, all Snowballs should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+    - "KmsKeyARN": absent
+
+
+
+
+
+- name: aws-sns-encrypted-reporting-pull
+  resource: aws.sns
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SNS topics which are not encrypted.  Per
+    AWS security best practices, all SNS topics should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+      - KmsMasterKeyId: absent
+
+
+
+
+
+
+
+- name: aws-sqs-encrypted-reporting-pull
+  resource: aws.sqs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SQS queues which are not encrypted.  Per
+    AWS security best practices, all SQS queues should be encrypted to protect
+    sensitive data from attackers and unauthorized users.
+  filters:
+      - KmsMasterKeyId: absent
+
+
+
+
+
+
+
+- name: aws-workspaces-encrypted-reporting-pull
+  resource: aws.workspaces
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Workspaces which are not encrypted.  Per
+    AWS security best practices, all AWS Workspaces  should be encrypted to
+    protect sensitive data from attackers and unauthorized users.
+  filters:
+    - or:
+        - "VolumeEncryptionKey": absent
+        - "UserVolumeEncryptionEnabled": false
+        - "RootVolumeEncryptionEnabled": false

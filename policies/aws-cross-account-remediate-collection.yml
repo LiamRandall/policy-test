@@ -1,0 +1,645 @@
+vars:
+
+    mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+    security-team-email: &security-team-email security-team@company.com
+
+    s3-cross-account: &s3-cross-account
+        type: cross-account
+        whitelist_from:
+          url: s3://s3bucket/ValidAccountNumbers.csv
+          format: csv2dict
+
+
+policies:
+
+
+- name: aws-ami-cross-account-remediate-pull
+  resource: aws.ami
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS AMIs which are either public facing or
+    granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your AMIs. These unauthorized permissions have been removed
+    to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-launch-permissions
+      accounts: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS AMI - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+- name: aws-catalog-portfolio-cross-account-remediate-pull
+  resource: aws.catalog-portfolio
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Catalog Portfolios which are either public
+    facing or granting permissions to accounts outside of the organizations
+    trusted accounts and the policy will remove the offending permissions.
+    Cross-account or public permissions should be restricted as they can allow
+    unauthorized users to access your Catalog Portfolios. These unauthorized
+    permissions have been removed to meet AWS security best practices and secure
+    your environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-shared-accounts
+      accounts: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Catalog Portfolio - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+- name: aws-ebs-snapshot-cross-account-remediate-pull
+  resource: aws.ebs-snapshot
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS EBS snapshots which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your EBS snapshots. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: set-permissions
+      remove: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS EBS Snapshot - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+- name: aws-ecr-cross-account-remediate-pull
+  resource: aws.ecr
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS ECR registry which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your ECR registry. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS ECR Registry - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+- name: aws-elasticsearch-cross-account-remediate-pull
+  resource: aws.elasticsearch
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Elasticsearch Domains which are either public
+    facing or granting permissions to accounts outside of the organizations
+    trusted accounts and the policy will remove the offending permissions.
+    Cross-account or public permissions should be restricted as they can allow
+    unauthorized users to access your Elasticsearch Domains. These unauthorized
+    permissions have been removed to meet AWS security best practices and secure
+    your environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Elasticsearch Domain - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+- name: aws-glacier-cross-account-remediate-pull
+  resource: aws.glacier
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Glacier Vaults which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your Glacier Vaults. These unauthorized permissions have
+    been removed to meet AWS security best practices and secure your
+    environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Glacier Vault - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+
+- name: aws-glue-catalog-cross-account-remediate-pull
+  resource: aws.glue-catalog
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Glue Catalogs which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your Glue Catalogs. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Glue Catalog - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+
+
+- name: aws-kms-cross-account-remediate-pull
+  resource: aws.kms
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS KMS Keystores which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your KMS Keystores. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS KMS Keystore - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+- name: aws-kms-key-cross-account-remediate-pull
+  resource: aws.kms-key
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS KMS Keys which are either public facing or
+    granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your KMS Keys. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS KMS Key - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+- name: aws-lambda-cross-account-remediate-pull
+  resource: aws.lambda
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Lambda functions which are either public
+    facing or granting permissions to accounts outside of the organizations
+    trusted accounts and the policy will remove the offending permissions.
+    Cross-account or public permissions should be restricted as they can allow
+    unauthorized users to access your Lambda functions. These unauthorized
+    permissions have been removed to meet AWS security best practices and secure
+    your environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Lambda Function - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+- name: aws-lambda-layer-cross-account-remediate-pull
+  resource: aws.lambda-layer
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Lambda Layers which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your Lambda Layers. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Lambda Layer - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+
+- name: aws-rds-cluster-snapshot-cross-account-remediate-pull
+  resource: aws.rds-cluster-snapshot
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS RDS Cluster Snapshots which are either public
+    facing or granting permissions to accounts outside of the organizations
+    trusted accounts and the policy will remove the offending permissions.
+    Cross-account or public permissions should be restricted as they can allow
+    unauthorized users to access your RDS Cluster Snapshots. These unauthorized
+    permissions have been removed to meet AWS security best practices and secure
+    your environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: set-permissions
+      remove: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS RDS Cluster Snapshot - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+- name: aws-rds-snapshot-cross-account-remediate-pull
+  resource: aws.rds-snapshot
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS RDS Snapshots which are either public facing
+    or granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your RDS Snapshots. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: set-permissions
+      remove: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS RDS Snapshot - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+
+- name: aws-redshift-snapshot-cross-account-remediate-pull
+  resource: aws.redshift-snapshot
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS Redshift Snapshots which are either public
+    facing or granting permissions to accounts outside of the organizations
+    trusted accounts and the policy will remove the offending permissions.
+    Cross-account or public permissions should be restricted as they can allow
+    unauthorized users to access your Redshift Snapshots. These unauthorized
+    permissions have been removed to meet AWS security best practices and secure
+    your environment. A notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: revoke-access
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS Redshift Snapshot - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+
+- name: aws-sns-cross-account-remediate-pull
+  resource: aws.sns
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS SNS Topics which are either public facing or
+    granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your SNS Topics. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS SNS Topic - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}
+
+
+
+
+
+- name: aws-sqs-cross-account-remediate-pull
+  resource: aws.sqs
+  metadata:
+    category: [security/access-control]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [IAM-07,IVS-08]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will check for AWS SQS queues which are either public facing or
+    granting permissions to accounts outside of the organizations trusted
+    accounts and the policy will remove the offending permissions. Cross-account
+    or public permissions should be restricted as they can allow unauthorized
+    users to access your SQS queues. These unauthorized permissions have been
+    removed to meet AWS security best practices and secure your environment. A
+    notification will be sent to the impacted users.
+  filters:
+    - *s3-cross-account
+  actions:
+    - type: remove-statements
+      statement_ids: matched
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: "AWS SQS Queue - Public or Cross-Account Permissions Removed!! [custodian {{ account }} - {{ region }}]"
+      to:
+        - resource-owner
+        - *security-team-email
+      transport:
+        type: sqs
+        queue: *mailer-queue
+        region: {region}

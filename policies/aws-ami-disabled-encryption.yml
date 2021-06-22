@@ -1,0 +1,139 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AMIs are using encryption so that sensitive
+      data is secure at rest. Many regulatory and compliance standards require
+      data encryption to be enabled across resources. If any AMIs are found
+      without encryption, the AMI will be deregistered and a notification sent
+      to the impacted users.
+
+  description: &description |
+      AMIs which are not utilizing Server Side Encryption (SSE) will be
+      identified, deregistered, and the impacted users will be notified.
+
+  violation-desc: &violation-desc |
+      AMIs should be using Server Side Encryption (SSE) for secure data at
+      rest. The identified AMIs were not using SSE and have now been
+      deregistered as they did not meet security best practices.
+
+  action-desc: &action-desc |
+      The identified AMIs have been deregisted as they were not encrypted.
+      Please recreate the identified AMIs using encryption.
+
+  subject: &subject "AWS AMI - Unencrypted AMIs Deregistered - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+
+policies:
+
+
+####################################################################
+#####   AWS.AMI - Enable SSE AMI Encryption                   #####
+####################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-ami-missing-encryption
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: ami
+  metadata:
+    long-description: *long-description
+  mode:
+      type: cloudtrail
+      events:
+        - source: ec2.amazonaws.com
+          event: CreateImage
+          ids: 'responseElements.imageId'
+        - source: ec2.amazonaws.com
+          event: CopyImage
+          ids: 'responseElements.imageId'
+        - source: ec2.amazonaws.com
+          event: RegisterImage
+          ids: 'responseElements.imageId'
+  description: *description
+  filters:
+      - type: value
+        key: "BlockDeviceMappings[*].Ebs.Encrypted"
+        op: in
+        value: false
+        value_type: swap
+  actions:
+      - deregister
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-ami-missing-encryption-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: ami
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  metadata:
+    long-description: *long-description
+  description: *description
+  filters:
+      - type: value
+        key: "BlockDeviceMappings[*].Ebs.Encrypted"
+        op: in
+        value: false
+        value_type: swap
+  actions:
+      - deregister
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

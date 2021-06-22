@@ -1,0 +1,167 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AWS Elasticsearch node-to-node data in
+      transit is encrypted to ensure proper data security and compliance
+      standards are being met. Node-to-node encryption implements TLS for all
+      transmissions between nodes in a domain's cluster. This adds an additional
+      layer of security by preventing attackers from intercepting the data being
+      transferred between nodes. This policy helps with compliance standards
+      such as APRA, GDPR, HIPAA, MAS, and NIST 800-53 rev4 by identifying the
+      non-compliant Elasticsearch domains missing node-to-node encryption and
+      marking\deleting them as node-to-node encryption cannot be enabled
+      after an Elasticsearch domain is created.
+
+  description: &description |
+      Newly launched Elasticsearch domains which do not have node-to-node
+      encryption enabled will be identified, tagged, deleted, and a notification sent to
+      impacted users. Node-to-node encryption cannot be enabled after an
+      Elasticsearch domain is created.
+
+  long-description-notify: &long-description-notify |
+      This policy will verify that AWS Elasticsearch node-to-node data in
+      transit is encrypted to ensure proper data security and compliance
+      standards are being met. Node-to-node encryption implements TLS for all
+      transmissions between nodes in a domain's cluster. This adds an additional
+      layer of security by preventing attackers from intercepting the data being
+      transferred between nodes. This policy helps with compliance standards
+      such as APRA, GDPR, HIPAA, MAS, and NIST 800-53 rev4 by identifying the
+      non-compliant Elasticsearch domains missing node-to-node encryption and
+      sending a notification to impacted users.
+
+  description-notify: &description-notify |
+      Elasticsearch domains which do not have node-to-node encryption enabled
+      will be identified, and a notification sent to the impacted users.
+      Node-to-node encryption cannot be enabled after an Elasticsearch domain is
+      created and requires a teardown and rebuild of the domain.
+
+  subject-delete: &subject-delete "Elasticsearch - New Non-Encrypted Elasticsearch Domain Deleted - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "Elasticsearch - New Non-Encrypted Elasticsearch Domain Identified - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+
+
+policies:
+
+
+###############################################################################
+#####   AWS.ELASTICSEARCH - Node-To-Node Encryption Must Be Enabled       #####
+###############################################################################
+
+## Policy Explanation: Elasticsearch node-to-node encryption must be enabled at
+## cluster creation. Elasticsearch domains cannot be deleted while they are in a
+## creating status so a policy chain is required for remediation.
+
+
+################################
+## CloudTrail mode policy chain
+################################
+
+
+- name: aws-elasticsearch-node-to-node-encryption
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description
+  mode:
+    type: cloudtrail
+    events:
+      - CreateElasticsearchDomain
+  description: *description
+  filters:
+      - type: value
+        key: "NodeToNodeEncryptionOptions.Enabled"
+        value: false
+  actions:
+      - type: tag
+        key: NodeToNodeEncryption
+        value: "False"
+
+
+
+
+- name: aws-elasticsearch-non-encrypted-node-to-node-delete
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description
+  mode:
+    type: periodic
+    schedule: "rate(30 minutes)"
+  description: *description
+  filters:
+    - type: value
+      key: "NodeToNodeEncryptionOptions.Enabled"
+      value: false
+    - "tag:NodeToNodeEncryption": present
+    - Created: true
+    - Processing: false
+    - UpgradeProcessing: false
+  actions:
+    - delete
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-delete
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-elasticsearch-non-encrypted-node-to-node-notify-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: elasticsearch
+  metadata:
+    long-description: *long-description-notify
+  description: *description-notify
+  filters:
+    - type: value
+      key: "NodeToNodeEncryptionOptions.Enabled"
+      value: false
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-notify
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}

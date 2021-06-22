@@ -1,0 +1,152 @@
+vars:
+
+  long-description: &long-description |
+      This policy will ensure EBS volumes are encrypted and using customer
+      managed CMK KMS Keys. Using customer managed CMK KMS keys provides full
+      control over who can use the keys to access data encrypted with them. This
+      policy helps with compliance standards such as GDPR, APRA, MAS, and NIST
+      800-53 rev4 by identifying the non-compliant EBS volumes.
+
+  description: &description |
+      EBS volumes which are not encrypted with a customer owned CMK KMS key will
+      be identified, encrypted, and the impacted users will be notified.
+
+  kms-key-alias: &kms-key-alias alias/Company-Standardized-EBS-CMK
+
+  violation-desc: &violation-desc |
+      EBS volumes should be encrypted and the encryption key used should be a
+      customer managed CMK key. The identified volumes either had encryption disabled
+      or were encrypted using an AWS managed CMK key which does not meet
+      compliance standards.
+
+  action-desc: &action-desc |
+      The identified EBS volumes have been updated to be encrypted using the company's
+      customer managed CMK key of alias/Company-Standardized-EBS-CMK. Please
+      verify your volumes functionality as the enabling of encryption or
+      switching of encryption keys can affect some client's connectivity.
+
+  subject: &subject "EBS Volume - Encryption Has Been Enabled/Updated - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+##########################################################################
+#####   AWS.EBS - Not Encrypted With Customer Managed CMK KMS  Key   #####
+##########################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-ebs-not-encrypted-with-customer-cmk
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::NIST
+    - Compliance::MAS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: ebs
+  mode:
+      type: cloudtrail
+      events:
+        - source: ec2.amazonaws.com
+          event: AttachVolume
+          ids: 'responseElements.volumeId'
+        - source: ec2.amazonaws.com
+          event: CreateVolume
+          ids: 'responseElements.volumeId'
+  description: *description
+  filters:
+   - type: value
+     key: "Attachments[0].Device"
+     value: not-null
+   - or:
+      - "KmsKeyId": absent
+      - "Encrypted": false
+      - type: kms-alias
+        key: c7n:AliasName
+        value: "^(alias/aws/ebs)"
+        op: regex
+  actions:
+      - type: encrypt-instance-volumes
+        key: *kms-key-alias
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-ebs-not-encrypted-with-customer-cmk-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::NIST
+    - Compliance::MAS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: ebs
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  description: *description
+  filters:
+   - type: value
+     key: "Attachments[0].Device"
+     value: not-null
+   - or:
+      - "KmsKeyId": absent
+      - "Encrypted": false
+      - type: kms-alias
+        key: c7n:AliasName
+        value: "^(alias/aws/ebs)"
+        op: regex
+  actions:
+      - type: encrypt-instance-volumes
+        key: *kms-key-alias
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

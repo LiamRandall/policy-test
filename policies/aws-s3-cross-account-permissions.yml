@@ -1,0 +1,135 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that S3 buckets are not granting access to any
+      untrusted AWS accounts. Trusted accounts can be whitelisted in the
+      policies cross-account filter. Any untrusted cross account permissions
+      will be removed from the S3 buckets to bring the resource back into
+      compliance with this policy and a notification will be sent. If a S3
+      bucket's policy is too permissive, attackers or untrusted parties could
+      gain access to the buckets objects or settings and a data leak or service
+      abuse could occur. This policy helps with compliance standards such as
+      APRA, MAS, NIST 800-53 rev4 and PCI DSS by identifying and remediating the
+      non-compliant S3 buckets.
+
+  description: &description |
+      S3 buckets which have unauthorized cross account permissions will be
+      identified, the insecure permissions removed, and impacted users will be
+      notified.
+
+  violation-desc: &violation-desc |
+      S3 buckets should not be granting permissions to any unauthorized
+      accounts. The identified S3 buckets access was overly permissive via the S3
+      bucket's access policy and the unauthorized permissions have automatically
+      been removed.
+
+  action-desc: &action-desc |
+      The identified S3 bucket's unauthorized cross account permissions have been
+      removed by Cloud Custodian.
+
+  subject: &subject "S3 bucket - Unauthorized Cross Account Access Removed - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+policies:
+
+
+####################################################################
+#####   AWS.S3 - Unauthorized Cross Account Permissions       #####
+####################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-s3-cross-account-permissions
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: s3
+  metadata:
+    long-description: *long-description
+  mode:
+      type: cloudtrail
+      events:
+        - CreateBucket
+        - source: s3.amazonaws.com
+          event: PutBucketPolicy
+          ids: "requestParameters.bucketName"
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: false
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-s3-cross-account-permissions-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: s3
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  metadata:
+    long-description: *long-description
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: false
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

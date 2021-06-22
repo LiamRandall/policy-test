@@ -1,0 +1,129 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AWS RDS database clusters are encrypted to
+      ensure proper data security and compliance standards are being met.
+      Encrypting sensitive and critical data is recommended to prevent
+      unauthorized access to your data. This policy helps with compliance
+      standards such as APRA, GDPR, HIPAA, MAS, NIST 800-53 rev4, and PCI DSS by
+      identifying the non-compliant RDS database clusters which are not
+      encrypted and taking an appropriate action. Remediation options include
+      deletion of the non-compliant database clusters and a notification sent to
+      the impacted users. Encryption cannot be enabled after an RDS database
+      cluster is created.
+
+  description-delete: &description-delete |
+      Newly launched RDS database clusters which are not encrypted will be
+      identified, deleted, and the impacted users notified. Encryption cannot be
+      enabled or modified after an RDS database cluster is created.
+
+  description-notify: &description-notify |
+      RDS database clusters which are not encrypted will be identified and the
+      impacted users notified. Encryption cannot be enabled or modified after an
+      RDS database cluster is created. The non-compliant database cluster should
+      be deleted and recreated using encryption to ensure it meets encryption
+      requirements for compliance regulations.
+
+  subject-delete: &subject-delete "RDS Cluster - Database Cluster Deleted Due To Encryption Issue - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "RDS Cluster - Database Cluster Encryption Issue - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+####################################################################
+#####   AWS.RDS-CLUSTER - DB Clusters Must Be Encrypted        #####
+####################################################################
+
+## Policy Explanation:
+## RDS database clusters must be encrypted at creation as it cannot be enabled
+## afterwards.
+
+
+
+################################
+## CloudTrail mode policy chain
+################################
+
+
+- name: aws-rds-cluster-non-encrypted-delete
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: rds-cluster
+  metadata:
+    long-description: *long-description
+  mode:
+    type: cloudtrail
+    events:
+        - source: rds.amazonaws.com
+          event: CreateDBCluster
+          ids: "responseElements.dBCluster.dBClusterIdentifier"
+  description: *description-delete
+  filters:
+    - StorageEncrypted: false
+  actions:
+    - type: modify-db-cluster
+      attributes:
+         DeletionProtection: false
+    - type: delete
+      skip-snapshot: true
+      delete-instances: true
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-delete
+      to:
+         - resource-owner
+         - event-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-rds-cluster-non-encrypted-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: rds-cluster
+  metadata:
+    long-description: *long-description
+  description: *description-notify
+  filters:
+    - StorageEncrypted: false
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-notify
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}

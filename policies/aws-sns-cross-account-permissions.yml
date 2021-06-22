@@ -1,0 +1,146 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that SNS topics are not granting access to any
+      untrusted AWS accounts. Trusted accounts can be whitelisted in the
+      policies cross-account filter. Any untrusted cross account permissions
+      will be removed from the SNS topics to bring the resource back into
+      compliance with this policy and a notification will be sent. If a SNS
+      topic's policy is too permissive, attackers or untrusted parties could
+      gain access to the topics messages or settings and a data leak or service
+      abuse could occur. This policy helps with compliance standards such as
+      APRA, MAS, NIST 800-53 rev4 and PCI DSS by identifying and remediating the
+      non-compliant sns topics.
+
+  description: &description |
+      SNS topics which have unauthorized cross account permissions will be
+      identified, the insecure permissions removed, and impacted users will be
+      notified.
+
+  violation-desc: &violation-desc |
+      SNS topics should not be granting permissions to any unauthorized
+      accounts. The identified SNS topics access was overly permissive via the SNS
+      topic's access policy and the unauthorized permissions have automatically
+      been removed.
+
+  action-desc: &action-desc |
+      The identified SNS topics unauthorized cross account permissions have been
+      removed by Cloud Custodian.
+
+  subject: &subject "SNS Topic - Unauthorized Cross Account Access Removed - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+policies:
+
+
+####################################################################
+#####   AWS.SNS - Unauthorized Cross Account Permissions       #####
+####################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-sns-cross-account-permissions
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: sns
+  metadata:
+    long-description: *long-description
+  mode:
+      type: cloudtrail
+      events:
+        - source: sns.amazonaws.com
+          event: CreateTopic
+          ids: 'responseElements.topicArn'
+        - source: sns.amazonaws.com
+          event: SetTopicAttributes
+          ids: 'requestParameters.topicArn'
+        - source: sns.amazonaws.com
+          event: AddPermission
+          ids: 'requestParameters.topicArn'
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: false
+        whitelist_from:
+            url: s3://s3bucket/CompanyAccountNumbers.csv
+            format: csv2dict
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-sns-cross-account-permissions-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: sns
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  metadata:
+    long-description: *long-description
+  description: *description
+  filters:
+      - type: cross-account
+        everyone_only: false
+        whitelist_from:
+            url: s3://s3bucket/CompanyAccountNumbers.csv
+            format: csv2dict
+  actions:
+      - type: remove-statements
+        statement_ids: matched
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

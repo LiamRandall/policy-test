@@ -1,0 +1,148 @@
+vars:
+
+  long-description: &long-description |
+      This policy ensures EFS file systems are encrypted using Customer Managed
+      (CMK) KMS Keys. Using Customer Managed (CMK) KMS keys provides full
+      control over who can use the keys to access data encrypted with them. This
+      policy helps with compliance standards such as GDPR, APRA, MAS, and NIST
+      800-53 rev4 by identifying the non-compliant EFS file systems.
+
+  description-delete: &description-delete |
+      Newly created EFS file systems which are not encrypted at rest with a
+      Customer Managed (CMK) KMS key will be identified, deleted and the
+      impacted users will be notified.
+
+  description-notify: &description-notify |
+      Pre-existing EFS file systems which are not encrypted at rest with a
+      Customer Managed (CMK) KMS key will be identified, and the impacted users
+      will be notified.
+
+  kms-key-alias: &kms-key-alias alias/Company-Standardized-EFS-CMK
+
+  violation-desc: &violation-desc |
+      EFS volumes should be encrypted and the encryption key used should be a
+      customer managed CMK KMS key. The identified file system either had
+      encryption disabled or was encrypted using an encryption key which does
+      not meet compliance standards.
+
+  action-desc-delete: &action-desc-delete |
+      The identified, newly created EFS file system has been deleted, as it
+      didn't meet compliance standards. Please recreate the EFS file systems
+      with at-rest encryption enabled, and using a Customer Manager (CMK) KMS key.
+
+  action-desc-notify: &action-desc-notify |
+      The identified EFS file system is not encrypted at-rest. Please remove
+      the non-encrypted file system and create a new EFS file system with at-rest
+      encryption enabled.
+
+  subject-delete: &subject-delete "EFS File System - A Non-compliant EFS File
+      System Has Been Deleted Due to Encryption Issue - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "EFS File System - An EFS File System Has Been
+      Created That Does Not Meet Encryption Compliance Standards - [custodian {{ account }} -
+      {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+##########################################################################
+#####   AWS.EFS - Not Encrypted With Customer Managed CMK KMS  Key   #####
+##########################################################################
+
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-efs-not-encrypted-with-customer-cmk
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::NIST
+    - Compliance::MAS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: efs
+  mode:
+      type: cloudtrail
+      events:
+        - source: efs.amazonaws.com
+          event: CreateFileSystem
+          ids: 'responseElements.fileSystemId'
+  description: *description-delete
+  filters:
+    - or:
+      - Encrypted: "False"
+      - type: kms-key
+        key: c7n:AliasName
+        value: "^(alias/aws/efs)"
+        op: regex
+  actions:
+      - type: delete
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject-delete
+        violation_desc: *violation-desc
+        action_desc: *action-desc-delete
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+            - event-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-efs-not-encrypted-with-customer-cmk-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::NIST
+    - Compliance::MAS
+    - Risk::High
+  metadata:
+    long-description: *long-description
+  resource: efs
+  description: *description-notify
+  filters:
+    - or:
+      - Encrypted: "False"
+      - type: kms-key
+        key: c7n:AliasName
+        value: "^(alias/aws/efs)"
+        op: regex
+  actions:
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject-notify
+        violation_desc: *violation-desc
+        action_desc: *action-desc-notify
+        owner_absent_contact:
+            - "{missingcontact}"
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}

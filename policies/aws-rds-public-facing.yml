@@ -1,0 +1,133 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AWS RDS databases are not public facing to
+      ensure proper data security and compliance standards are being met.
+      Removing public facing permissions from RDS databases is recommended to
+      prevent unauthorized access to your data and malicious actions such as
+      brute force attacks and SQL injections. This policy helps with compliance
+      standards such as APRA, GDPR, HIPAA, MAS, NIST 800-53 rev4, and PCI DSS by
+      identifying the non-compliant RDS databases which are public facing and
+      taking an appropriate action. Remediation options include removing the
+      public facing permissions of the non-compliant databases and a
+      notification sent to the impacted users.
+
+  description-new: &description |
+      Newly launched or modified RDS databases which are public facing will be identified,
+      public permissions removed, and the impacted users notified.
+
+  description-pre-existing: &description-pre-existing |
+      Pre-existing RDS databases which are public facing will be identified,
+      public permissions removed, and the impacted users notified.
+
+  subject: &subject "RDS - Public Facing Database Access Removed - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+## Policy Notes: For testing, a VPC with Internet Gateway is required with at
+## least 2 available subnets
+
+policies:
+
+
+############################################################
+#####   AWS.RDS - DBs Must Not Be Public Facing        #####
+############################################################
+
+
+
+
+
+################################
+## CloudTrail mode policy chain
+################################
+
+
+- name: aws-rds-public-facing
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: rds
+  metadata:
+    long-description: *long-description
+  mode:
+    type: cloudtrail
+    events:
+        - source: rds.amazonaws.com
+          event: CreateDBInstance
+          ids: "requestParameters.dBInstanceIdentifier"
+        - source: rds.amazonaws.com
+          event: ModifyDBInstance
+          ids: "requestParameters.dBInstanceIdentifier"
+  description: *description
+  filters:
+    - PubliclyAccessible: true
+  actions:
+    - type: modify-db
+      update:
+         - property: 'PubliclyAccessible'
+           value: false
+      immediate: true
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      to:
+         - resource-owner
+         - event-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-rds-public-facing-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::HIPAA
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: rds
+  max-resources:
+    percent: 10
+    amount: 10
+    op: and
+  metadata:
+    long-description: *long-description
+  description: *description-pre-existing
+  filters:
+    - PubliclyAccessible: true
+  actions:
+    - type: modify-db
+      update:
+         - property: 'PubliclyAccessible'
+           value: false
+      immediate: true
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}

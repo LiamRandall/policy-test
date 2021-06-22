@@ -1,0 +1,231 @@
+vars:
+
+  long-description-login: &long-description-login |
+      This policy will trigger when an IAM user with a console password present
+      logs into AWS without having a multi-factor authentication (MFA) device.
+      MFA devices provide an additional and important layer of security to
+      protect your users from unauthorized access from attackers by requiring an
+      additional unique credential from the MFA device in order to gain access
+      to the users accounts with each login. This policy helps with compliance
+      standards such as APRA, MAS, and NIST 800-53 rev4 by identifying the IAM
+      users which have console passwords without MFA authentication enabled, and
+      notifying the impacted users.
+
+  long-description-deactivated: &long-description-deactivated |
+      This policy will trigger when an IAM user with a console password present
+      deactivates their multi-factor authentication (MFA). MFA devices provide
+      an additional and important layer of security to protect your users from
+      unauthorized access from attackers by requiring an additional unique
+      credential from the MFA device in order to gain access to the users
+      accounts with each login. This policy helps with compliance standards such
+      as APRA, MAS, and NIST 800-53 rev4 by identifying the IAM users which have
+      console passwords and have deactivated their MFA authentication, and
+      notifying the impacted users.
+
+  long-description-missing: &long-description-missing |
+      This policy will find all IAM users which have a console password present
+      and no multi-factor authentication (MFA) setup. MFA devices provide an
+      additional and important layer of security to protect your users from
+      unauthorized access from attackers by requiring an additional unique
+      credential from the MFA device in order to gain access to the users
+      accounts with each login. This policy helps with compliance standards such
+      as APRA, MAS, and NIST 800-53 rev4 by identifying the IAM users which have
+      console passwords but no configured MFA authentication, and notifying the
+      impacted users.
+
+  description-login: &description-login |
+      An IAM user login was detected which did not use multi-factor
+      authentication (MFA). MFA devices are required for all IAM users with
+      console access to provide an additional layer of security from
+      unauthorized logins.
+
+  description-deactivated: &description-deactivated |
+      The identified IAM user's MFA device has been deactivated making the user
+      non-compliant to security best practices and compliance policies.
+      Deactivation of MFA devices can indicate users bypassing security controls
+      or attackers attempting to gain access to an IAM user account and should be
+      investigated.
+
+  description-missing: &description-missing |
+      IAM users were identified as having console passwords active but no MFA
+      authentication setup. MFA devices are required for all IAM users with
+      console access to provide an additional layer of security from
+      unauthorized logins.
+
+  subject-login: &subject-login "IAM User - Login With No MFA Detected! [custodian {{ account }} - {{ region }}]"
+
+  subject-deactivated: &subject-deactivated "IAM User - MFA Device Deactivated! [custodian {{ account }} - {{ region }}]"
+
+  subject-missing: &subject-missing "IAM User - MFA Device Not Configured! [custodian {{ account }} - {{ region }}]"
+
+  violation-desc-login: &violation-desc-login |
+      IAM users with console access should have MFA devices configured to
+      provide an additional layer of security from attackers. The identified IAM
+      user has logged into AWS without using an MFA device which is required to
+      meet security and compliance policies.
+
+  action-desc-login: &action-desc-login |
+      Please go into the AWS IAM console, locate the identified IAM user account
+      and add an MFA device to the user. Each login following the enablement of
+      the MFA device will require the unique code from the setup MFA device to
+      properly authenticate.
+
+  violation-desc-missing: &violation-desc-missing |
+      IAM users with console access should have MFA devices configured to
+      provide an additional layer of security from attackers. The identified IAM
+      user need to have an MFA device configured on them to meet security and
+      compliance policies.
+
+  action-desc-missing: &action-desc-missing |
+      Please go into the AWS IAM console, locate the identified IAM user's
+      account and add an MFA device to the user. Each login following the
+      enablement of the MFA device will require the unique code from the setup
+      MFA device to properly authenticate.
+
+  violation-desc-deactivated: &violation-desc-deactivated |
+      The identified IAM user just had their MFA device deactivated. MFA devices
+      should not be deactivated unless it is being replaced by a new MFA device.
+
+  action-desc-deactivated: &action-desc-deactivated |
+      Please ensure the identified IAM users have an active MFA device present.
+      If an MFA device is not present for any user, please have that user setup a new
+      MFA device.
+
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+#############################################################
+#####   AWS.IAM-USER - MFA Missing Or Deactivated       #####
+#############################################################
+
+
+
+#########################
+## CloudTrail mode policy
+#########################
+
+
+- name: aws-iam-user-mfa-deactivated
+  metadata:
+      long-description: *long-description-deactivated
+  resource: iam-user
+  description: *description-deactivated
+  region: us-east-1
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST
+    - Risk::High
+  mode:
+     type: cloudtrail
+     events:
+        - source: iam.amazonaws.com
+          event: DeactivateMFADevice
+          ids: "requestParameters.userName"
+  filters:
+      - type: credential
+        key: password_enabled
+        value: true
+  actions:
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject-deactivated
+        violation_desc: *violation-desc-deactivated
+        action_desc: *action-desc-deactivated
+        to:
+            - event-owner
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+
+
+- name: aws-iam-user-no-mfa-login
+  metadata:
+    long-description: *long-description-login
+  resource: iam-user
+  description: *description-login
+  region: us-east-1
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST
+    - Risk::High
+  mode:
+     type: cloudtrail
+     events:
+        - source: signin.amazonaws.com
+          event: ConsoleLogin
+          ids: "userIdentity.userName"
+  filters:
+    - type: event
+      key: "detail.additionalEventData.MFAUsed"
+      value: "No"
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-login
+      violation_desc: *violation-desc-login
+      action_desc: *action-desc-login
+      to:
+          - event-owner
+          - resource-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}
+
+
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-iam-user-no-mfa-setup-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::NIST
+    - Risk::High
+  metadata:
+    long-description: *long-description-missing
+  resource: iam-user
+  region: us-east-1
+  description: *description-missing
+  filters:
+      - type: credential
+        key: mfa_active
+        value: false
+      - type: credential
+        key: password_enabled
+        value: true
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-missing
+      violation_desc: *violation-desc-missing
+      action_desc: *action-desc-missing
+      to:
+        - resource-owner
+      transport:
+          type: sqs
+          queue: *mailer-queue
+          region: {region}

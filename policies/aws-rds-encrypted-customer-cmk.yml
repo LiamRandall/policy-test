@@ -1,0 +1,139 @@
+vars:
+
+  long-description: &long-description |
+      This policy will verify that AWS RDS databases are encrypted using
+      customer managed KMS keys to ensure proper data security and compliance
+      standards are being met. Using customer managed KMS keys provides finer
+      grained security controls over the encryption and decryption processes
+      versus using the AWS managed KMS keys. This policy helps with compliance
+      standards such as APRA, GDPR, MAS, and NIST 800-53 rev4 by identifying the
+      non-compliant RDS databases which are either not encrypted, or encrypted
+      with the default AWS managed KMS key, and taking an appropriate action.
+      Remediation options include deletion of the non-compliant databases and a
+      notification sent to the impacted users. Encryption cannot be enabled
+      after an RDS database is created.
+
+  description-delete: &description-delete |
+      Newly launched RDS databases which are either not encrypted or encrypted
+      with the default AWS managed KMS key will be identified, deleted, and the
+      impacted users notified. Encryption cannot be enabled or modified after an
+      RDS database is created.
+
+  description-notify: &description-notify |
+      RDS databases which are either not encrypted or encrypted with the default
+      AWS managed KMS key will be identified and the impacted users notified.
+      Encryption cannot be enabled or modified after an RDS database is created.
+      The non-compliant database should be deleted and recreated using a
+      customer managed KMS key for encryption to ensure it meets encryption
+      requirements for compliance regulations.
+
+  subject-delete: &subject-delete "RDS - Database Deleted Due To Encryption Issue - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "RDS - Database Encryption Issue - [custodian {{ account }} - {{ region }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+
+policies:
+
+
+###################################################################################
+#####   AWS.RDS - DBs Must Be Encrypted Using KMS Customer Managed CMKs       #####
+###################################################################################
+
+## Policy Explanation:
+## RDS databases must be encrypted at creation as it cannot be enabled
+## afterwards.
+
+
+
+################################
+## CloudTrail mode policy chain
+################################
+
+
+- name: aws-rds-non-cmk-encrypted-delete
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: rds
+  metadata:
+    long-description: *long-description
+  mode:
+    type: cloudtrail
+    events:
+        - source: rds.amazonaws.com
+          event: CreateDBInstance
+          ids: "requestParameters.dBInstanceIdentifier"
+  description: *description-delete
+  filters:
+    - or:
+      - StorageEncrypted: false
+      - type: kms-alias
+        key: c7n:AliasName
+        value: "^(alias/aws/rds)"
+        op: regex
+  actions:
+    - type: modify-db
+      update:
+         - property: 'DeletionProtection'
+           value: false
+      immediate: true
+    - type: delete
+      skip-snapshot: true
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-delete
+      to:
+         - resource-owner
+         - event-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+- name: aws-rds-non-cmk-encrypted-pull
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::GDPR
+    - Compliance::MAS
+    - Compliance::NIST 800-53
+    - Risk::High
+  resource: rds
+  metadata:
+    long-description: *long-description
+  description: *description-notify
+  filters:
+    - or:
+      - StorageEncrypted: false
+      - type: kms-alias
+        key: c7n:AliasName
+        value: "^(alias/aws/rds)"
+        op: regex
+  actions:
+    - type: notify
+      template: default.html
+      priority_header: 1
+      subject: *subject-notify
+      to:
+         - resource-owner
+      transport:
+           type: sqs
+           queue: *mailer-queue
+           region: {region}

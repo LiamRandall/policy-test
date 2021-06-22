@@ -1,0 +1,986 @@
+vars:
+
+    mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+    security-team-email: &security-team-email security-team@company.com
+
+
+
+
+policies:
+
+
+
+
+
+- name: aws-backup-vault-cmk-encrypted-notify-pull
+  resource: aws.backup-vault
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Backup Vaults which are not encrypted with
+    Customer Managed Keys (CMKs). Per AWS security best practices, all Backup
+    Vaults should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+       - type: kms-key
+         key: c7n:AliasName
+         value: '^(alias\/aws\/\S+)'
+         op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Backup Vault - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-dms-instance-cmk-encrypted-notify-pull
+  resource: aws.dms-instance
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DMS instances which are not encrypted with
+    Customer Managed Keys (CMKs). Per AWS security best practices, all DMS
+    instances should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DMS Instance - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-dynamodb-table-cmk-encrypted-notify-pull
+  resource: aws.dynamodb-table
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS DynamoDB Tables which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    DynamoDB Tables should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS DynamoDB Table - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-ebs-cmk-encrypted-notify-pull
+  resource: aws.ebs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EBS volumes which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all EBS
+    volumes should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+     - type: kms-alias
+       key: c7n:AliasName
+       value: '^(alias\/aws\/\S+)'
+       op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EBS Volume - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+
+
+
+- name: aws-efs-cmk-encrypted-notify-pull
+  resource: aws.efs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS EFS volumes which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all EFS
+    volumes should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS EFS Filesystem - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-elasticache-group-cmk-encrypted-notify-pull
+  resource: aws.elasticache-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticache groups which are not encrypted
+    with Customer Managed Keys (CMKs).  Per AWS security best practices, all
+    Elasticache groups should be encrypted with CMKs to protect sensitive data
+    from attackers and unauthorized users while allowing customer management of
+    the encryption keys. A notification will be sent to the impacted users.
+  filters:
+    - type: kms-key
+      key: c7n:AliasName
+      value: '^(alias\/aws\/\S+)'
+      op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Elasticache Group - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-elasticsearch-cmk-encrypted-notify-pull
+  resource: aws.elasticsearch
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Elasticsearch domains which are not
+    encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all Elasticsearch domains should be encrypted with CMKs to
+    protect sensitive data from attackers and unauthorized users while allowing
+    customer management of the encryption keys. A notification will be sent to
+    the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/es)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Elasticsearch Domain - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-firehose-cmk-encrypted-notify-pull
+  resource: aws.firehose
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Firehose streams which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    Firehose streams should be encrypted with CMKs to protect sensitive data
+    from attackers and unauthorized users while allowing customer management of
+    the encryption keys. A notification will be sent to the impacted users.
+  filters:
+     - type: kms-key
+       key: c7n:AliasName
+       value: alias/aws/firehose
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Firehose - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-fsx-cmk-encrypted-notify-pull
+  resource: aws.fsx
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX shares which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all FSX
+    shares should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS FSX Share - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-fsx-backup-cmk-encrypted-notify-pull
+  resource: aws.fsx-backup
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS FSX share backups which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all FSX
+    share backups should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+    - type: kms-key
+      key: c7n:AliasName
+      value: '^(alias\/aws\/\S+)'
+      op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS FSX Backup - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-glue-security-configuration-cmk-encrypted-notify-pull
+  resource: aws.glue-security-configuration
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Glue security configurations which are not
+    encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all Glue security configurations should be encrypted with CMKs to
+    protect sensitive data from attackers and unauthorized users while allowing
+    customer management of the encryption keys. A notification will be sent to
+    the impacted users.
+  filters:
+    - type: kms-key
+      key: c7n:AliasName
+      value: '^(alias\/aws\/\S+)'
+      op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Glue Security Configuration - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-kinesis-cmk-encrypted-notify-pull
+  resource: aws.kinesis
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis streams which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    Kinesis streams should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Kinesis - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-kinesis-video-cmk-encrypted-notify-pull
+  resource: aws.kinesis-video
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Kinesis video streams which are not
+    encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all Kinesis video streams should be encrypted with CMKs to
+    protect sensitive data from attackers and unauthorized users while allowing
+    customer management of the encryption keys. A notification will be sent to
+    the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Kinesis Video - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-lambda-cmk-encrypted-notify-pull
+  resource: aws.lambda
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Lambda functions which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    Lambda functions should be encrypted with CMKs to protect sensitive data
+    from attackers and unauthorized users while allowing customer management of
+    the encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Lambda Function - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-log-group-cmk-encrypted-notify-pull
+  resource: aws.log-group
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS CloudWatch Log groups which are not
+    encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all CloudWatch Log groups should be encrypted with CMKs to
+    protect sensitive data from attackers and unauthorized users while allowing
+    customer management of the encryption keys. A notification will be sent to
+    the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS CloudWatch Log Group - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+- name: aws-message-broker-cmk-encrypted-notify-pull
+  resource: aws.message-broker
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS message brokers which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    message brokers should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Message Broker - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-rds-cluster-cmk-encrypted-notify-pull
+  resource: aws.rds-cluster
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS clusters which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all RDS
+    clusters should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/rds)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Cluster - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-rds-cmk-encrypted-notify-pull
+  resource: aws.rds
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS RDS instances which are not encrypted with
+    Customer Managed Keys (CMKs). Per AWS security best practices, all RDS
+    instances  should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-alias
+        key: c7n:AliasName
+        value: '^(alias\/aws\/rds)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS RDS Instance - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-redshift-cmk-encrypted-notify-pull
+  resource: aws.redshift
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Redshift clusters which are not encrypted
+    with Customer Managed Keys (CMKs). Per AWS security best practices, all
+    Redshift clusters should be encrypted with CMKs to protect sensitive data
+    from attackers and unauthorized users while allowing customer management of
+    the encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/\S+)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Redshift Cluster - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-s3-cmk-encrypted-notify-pull
+  resource: aws.s3
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS S3 buckets which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all S3
+    buckets should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+       - type: bucket-encryption
+         state: True
+         crypto: aws:kms
+         key: alias/aws/s3
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS S3 Bucket - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-sagemaker-endpoint-config-cmk-encrypted-notify-pull
+  resource: aws.sagemaker-endpoint-config
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker endpoint configurations which
+    are not encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all Sagemaker endpoint configurations should be encrypted with
+    CMKs to protect sensitive data from attackers and unauthorized users while
+    allowing customer management of the encryption keys. A notification will be
+    sent to the impacted users.
+  filters:
+       - type: kms-key
+         key: c7n:AliasName
+         value: '^(alias\/aws\/\S+)'
+         op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Sagemaker Endpoint Configuration - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+- name: aws-sagemaker-notebook-cmk-encrypted-notify-pull
+  resource: aws.sagemaker-notebook
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Sagemaker notebooks which are not
+    encrypted with Customer Managed Keys (CMKs).  Per AWS security best
+    practices, all Sagemaker notebooks should be encrypted with CMKs to protect
+    sensitive data from attackers and unauthorized users while allowing customer
+    management of the encryption keys. A notification will be sent to the
+    impacted users.
+  filters:
+       - type: kms-key
+         key: c7n:AliasName
+         value: '^(alias\/aws\/\S+)'
+         op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Sagemaker Notebook - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-sns-cmk-encrypted-notify-pull
+  resource: aws.sns
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SNS topics which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all SNS
+    topics should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/sns)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS SNS Topic - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+- name: aws-sqs-cmk-encrypted-notify-pull
+  resource: aws.sqs
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS SQS queues which are not encrypted with
+    Customer Managed Keys (CMKs).  Per AWS security best practices, all SQS
+    queues should be encrypted with CMKs to protect sensitive data from
+    attackers and unauthorized users while allowing customer management of the
+    encryption keys. A notification will be sent to the impacted users.
+  filters:
+      - type: kms-key
+        key: c7n:AliasName
+        value: '^(alias\/aws\/sqs)'
+        op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS SQS Queue - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1
+
+
+
+
+
+
+
+- name: aws-workspaces-cmk-encrypted-notify-pull
+  resource: aws.workspaces
+  metadata:
+    category: [security/encryption]
+    compliance:
+      - type: CCM
+        version: 3.0.1
+        control-mappings: [EKM-03]
+    creator: Stacklet
+    severity: high
+  description: |
+    This policy will identify all AWS Workspaces which are not encrypted with Customer Managed Keys (CMKs).  Per
+    AWS security best practices, all AWS Workspaces  should be encrypted with CMKs to
+    protect sensitive data from attackers and unauthorized users while allowing customer management of the encryption keys. A notification
+    will be sent to the impacted users.
+  filters:
+        - type: kms-key
+          key: c7n:AliasName
+          value: '^(alias\/aws\/\S+)'
+          op: regex
+  actions:
+   - type: notify
+     template: default.html
+     priority_header: 1
+     subject: "AWS Workspaces - CMK Encryption Is Not Enabled!!! - [custodian {{ account }} - {{ region }}]"
+     to:
+       - resource-owner
+       - *security-team-email
+     transport:
+       type: sqs
+       queue: *mailer-queue
+       region: us-east-1

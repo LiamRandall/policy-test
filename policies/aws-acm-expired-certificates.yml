@@ -1,0 +1,120 @@
+vars:
+
+  long-description: &long-description |
+      This policy will help you ensure that your expired SSL/TLS certificates
+      managed by AWS Certificate Manager (ACM) are removed in order to adhere to
+      Amazon Security Best Practices. AWS Certificate Manager (ACM) is the
+      service that lets you easily provision, manage, and deploy SSL/TLS
+      certificates for use with other AWS resources such as Elastic Load
+      Balancers, CloudFront distributions or APIs on Amazon API Gateway.
+
+  description: &description |
+      This policy will help you ensure that your expired SSL/TLS certificates
+      managed by AWS Certificate Manager (ACM) are removed in order to adhere to
+      Amazon Security Best Practices.
+
+  violation-desc: &violation-desc |
+      The identified ACM certificate has expired and has been removed in order
+      to adhere to Amazon Security Best Practices. SSL/TLS certificates should
+      be renewed before they reach their expiration date to prevent disruptions
+      to the secure communications between the client and the AWS resource that
+      implements the certificates like CloudFront distributions.
+
+  action-desc: &action-desc |
+      The identified AWS Certificate Manager SSL/TLS certificate has expired and
+      has been deleted. Expired SSL/TLS certificates managed by AWS ACM should
+      removed in order to adhere to Amazon Security Best Practices.
+
+  action-desc-notify: &action-desc-notify |
+      The identified AWS Certificate Manager SSL/TLS certificate has expired and
+      has been tagged for deletion in 1 day. Expired SSL/TLS certificates
+      managed by AWS ACM should removed in order to adhere to Amazon Security
+      Best Practices.
+
+  subject: &subject "AWS Certificate Manager Certificate Has Expired And Has
+  Been Removed - [custodian {{ account }} - {{ region }}]"
+
+  subject-notify: &subject-notify "AWS Certificate Manager Certificate Has
+  Expired And Will Be Removed In 1 Day - [custodian {{ account }} - {{ region
+  }}]"
+
+  mailer-queue: &mailer-queue https://sqs.{region}.amazonaws.com/{account}/cloud-custodian-mailer
+
+
+
+policies:
+
+
+
+####################################################################
+#####   AWS.ACM EXPIRED CERTS
+####################################################################
+
+
+
+
+####################
+## Pull mode policy
+####################
+
+
+
+- name: aws-acm-certificate-notify-on-expired-certs
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: acm-certificate
+  metadata:
+      long-description: *long-description
+  filters:
+     - "Status": EXPIRED
+  actions:
+      - type: mark-for-op
+        tag: expired_acm_cert
+        op: delete
+        days: 1
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject-notify
+        action_desc: *action-desc-notify
+        description: *description
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
+
+
+- name: aws-acm-certificate-delete-expired-certs
+  tags:
+    - Category::Security
+    - Compliance::APRA
+    - Compliance::MAS
+    - Compliance::PCI DSS
+    - Risk::High
+  resource: acm-certificate
+  metadata:
+      long-description: *long-description
+  filters:
+     - type: marked-for-op
+       tag: expired_acm_cert
+       op: delete
+  actions:
+      - delete
+      - type: notify
+        template: default.html
+        priority_header: 1
+        subject: *subject
+        violation_desc: *violation-desc
+        action_desc: *action-desc
+        to:
+            - resource-owner
+        transport:
+            type: sqs
+            queue: *mailer-queue
+            region: {region}
